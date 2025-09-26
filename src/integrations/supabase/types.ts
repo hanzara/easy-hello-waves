@@ -1311,6 +1311,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fee_configurations: {
+        Row: {
+          created_at: string | null
+          fee_type: string
+          id: string
+          is_active: boolean | null
+          maximum_fee: number | null
+          minimum_fee: number | null
+          percentage_rate: number | null
+          tiers: Json | null
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fee_type: string
+          id?: string
+          is_active?: boolean | null
+          maximum_fee?: number | null
+          minimum_fee?: number | null
+          percentage_rate?: number | null
+          tiers?: Json | null
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fee_type?: string
+          id?: string
+          is_active?: boolean | null
+          maximum_fee?: number | null
+          minimum_fee?: number | null
+          percentage_rate?: number | null
+          tiers?: Json | null
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       financial_goals: {
         Row: {
           category: string
@@ -3624,6 +3663,47 @@ export type Database = {
         }
         Relationships: []
       }
+      transaction_fees: {
+        Row: {
+          amount: number
+          created_at: string | null
+          fee_amount: number
+          fee_configuration_id: string | null
+          id: string
+          transaction_id: string | null
+          transaction_type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          fee_amount: number
+          fee_configuration_id?: string | null
+          id?: string
+          transaction_id?: string | null
+          transaction_type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          fee_amount?: number
+          fee_configuration_id?: string | null
+          id?: string
+          transaction_id?: string | null
+          transaction_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_fees_fee_configuration_id_fkey"
+            columns: ["fee_configuration_id"]
+            isOneToOne: false
+            referencedRelation: "fee_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tuition_payments: {
         Row: {
           academic_year: string | null
@@ -4580,6 +4660,10 @@ export type Database = {
       }
       calculate_savings_interest: {
         Args: { account_id: string }
+        Returns: number
+      }
+      calculate_transaction_fee: {
+        Args: { p_amount: number; p_transaction_type: string }
         Returns: number
       }
       convert_currency: {

@@ -55,7 +55,7 @@ const LoanRequestModal: React.FC<LoanRequestModalProps> = ({
     }
   };
 
-  const processingFee = parseFloat(amount) * 0.02; // 2% processing fee
+  const processingFee = parseFloat(amount) * 0.015; // 1.5% processing fee (updated from backend)
 
   return (
     <>

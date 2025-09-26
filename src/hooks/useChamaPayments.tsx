@@ -18,11 +18,24 @@ export const useChamaPayments = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
+      // Calculate transaction fee
+      const { data: feeData, error: feeError } = await supabase.rpc('calculate_transaction_fee', {
+        p_transaction_type: 'chama_contribution',
+        p_amount: amount
+      });
+
+      if (feeError) {
+        console.warn('Failed to calculate fee:', feeError);
+      }
+
+      const transactionFee = Number(feeData || 0);
+      const totalAmount = amount + transactionFee;
+
       const { data, error } = await supabase.functions.invoke('mpesa-integration', {
         body: {
           action: 'stk_push',
           phoneNumber,
-          amount,
+          amount: totalAmount, // Include fee in M-Pesa charge
           description: description || 'Chama contribution',
           transactionId: `chama_${chamaId}_${Date.now()}`
         }
@@ -38,7 +51,7 @@ export const useChamaPayments = () => {
           user_id: user.id,
           chama_id: chamaId,
           phone_number: phoneNumber,
-          amount,
+          amount: totalAmount,
           transaction_type: 'stk_push',
           purpose: 'contribution',
           checkout_request_id: data.CheckoutRequestID,
@@ -50,7 +63,19 @@ export const useChamaPayments = () => {
         console.warn('Failed to record M-Pesa transaction:', recordError);
       }
 
-      return data;
+      // Record the fee separately
+      if (transactionFee > 0) {
+        await supabase
+          .from('transaction_fees')
+          .insert({
+            transaction_type: 'chama_contribution',
+            amount,
+            fee_amount: transactionFee,
+            user_id: user.id
+          });
+      }
+
+      return { ...data, fee: transactionFee, totalAmount };
     },
     onSuccess: () => {
       toast({
@@ -77,11 +102,24 @@ export const useChamaPayments = () => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
+      // Calculate transaction fee
+      const { data: feeData, error: feeError } = await supabase.rpc('calculate_transaction_fee', {
+        p_transaction_type: 'wallet_topup',
+        p_amount: amount
+      });
+
+      if (feeError) {
+        console.warn('Failed to calculate fee:', feeError);
+      }
+
+      const transactionFee = Number(feeData || 0);
+      const totalAmount = amount + transactionFee;
+
       const { data, error } = await supabase.functions.invoke('mpesa-integration', {
         body: {
           action: 'stk_push',
           phoneNumber,
-          amount,
+          amount: totalAmount, // Include fee in M-Pesa charge
           description: description || 'Wallet top-up',
           transactionId: `topup_${user.id}_${Date.now()}`
         }
@@ -90,7 +128,19 @@ export const useChamaPayments = () => {
       if (error) throw error;
       if (!data.success) throw new Error(data.error);
 
-      return data;
+      // Record the fee separately
+      if (transactionFee > 0) {
+        await supabase
+          .from('transaction_fees')
+          .insert({
+            transaction_type: 'wallet_topup',
+            amount,
+            fee_amount: transactionFee,
+            user_id: user.id
+          });
+      }
+
+      return { ...data, fee: transactionFee, totalAmount };
     },
     onSuccess: () => {
       toast({

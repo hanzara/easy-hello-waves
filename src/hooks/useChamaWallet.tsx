@@ -168,14 +168,37 @@ export const useChamaWallet = () => {
     description?: string;
     pin: string;
   }) => {
+    // Calculate fee first
+    const { data: feeData } = await supabase.rpc('calculate_transaction_fee', {
+      p_transaction_type: 'send_money',
+      p_amount: transferData.amount
+    });
+    
+    const fee = Number(feeData || 0);
+    const totalCost = transferData.amount + fee;
+
     const result = await walletMutation.mutateAsync({
       action: 'send_to_member',
-      ...transferData
+      ...transferData,
+      fee,
+      total_cost: totalCost
     });
+
+    // Record the fee
+    if (fee > 0) {
+      await supabase
+        .from('transaction_fees')
+        .insert({
+          transaction_type: 'send_money',
+          amount: transferData.amount,
+          fee_amount: fee,
+          user_id: user?.id
+        });
+    }
 
     toast({
       title: "Transfer Successful! 📤",
-      description: `KES ${transferData.amount} sent to member.`
+      description: `KES ${transferData.amount} sent to member. Fee: KES ${fee}`
     });
 
     return result;
@@ -188,14 +211,37 @@ export const useChamaWallet = () => {
     payment_method: string;
     phone_number: string;
   }) => {
+    // Calculate fee first
+    const { data: feeData } = await supabase.rpc('calculate_transaction_fee', {
+      p_transaction_type: 'withdrawal',
+      p_amount: withdrawalData.amount
+    });
+    
+    const fee = Number(feeData || 0);
+    const netAmount = withdrawalData.amount - fee;
+
     const result = await walletMutation.mutateAsync({
       action: 'withdraw_funds',
-      ...withdrawalData
+      ...withdrawalData,
+      fee,
+      net_amount: netAmount
     });
+
+    // Record the fee
+    if (fee > 0) {
+      await supabase
+        .from('transaction_fees')
+        .insert({
+          transaction_type: 'withdrawal',
+          amount: withdrawalData.amount,
+          fee_amount: fee,
+          user_id: user?.id
+        });
+    }
 
     toast({
       title: "Withdrawal Submitted! 🏦",
-      description: "Your withdrawal request is being processed."
+      description: `Processing withdrawal of KES ${netAmount} (Fee: KES ${fee})`
     });
 
     return result;
