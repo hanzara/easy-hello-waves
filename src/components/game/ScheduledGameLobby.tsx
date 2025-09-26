@@ -53,9 +53,9 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
     setRegistering(null);
   };
 
-  const canAccessGame = (game: any) => {
-    const { expired } = getTimeUntilStart(game.scheduled_start);
-    const isRegistered = isUserRegistered(game.id);
+  const canAccessGame = (tournament: any) => {
+    const { expired } = getTimeUntilStart(tournament.start_time);
+    const isRegistered = isUserRegistered(tournament.id);
     return expired && isRegistered;
   };
 
@@ -104,11 +104,11 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
           </h3>
           <div className="grid gap-4">
             {userRegistrations.map(registration => {
-              const game = registration.scheduled_games;
-              if (!game) return null;
+              const tournament = registration.game_tournaments;
+              if (!tournament) return null;
               
-              const { expired, timeString } = getTimeUntilStart(game.scheduled_start);
-              const canPlay = canAccessGame(game);
+              const { expired, timeString } = getTimeUntilStart(tournament.start_time);
+              const canPlay = canAccessGame(tournament);
               
               return (
                 <Card 
@@ -123,13 +123,11 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-lg flex items-center gap-2">
-                          {game.game_categories?.is_premium && (
-                            <Crown className="h-4 w-4 text-yellow-600" />
-                          )}
-                          {game.title}
+                          <Crown className="h-4 w-4 text-yellow-600" />
+                          {tournament.name}
                         </CardTitle>
                         <CardDescription className="text-sm">
-                          {game.game_categories?.description}
+                          {tournament.description || `${tournament.game_type} Tournament`}
                         </CardDescription>
                       </div>
                       <Badge variant={canPlay ? "default" : "secondary"} className="flex items-center gap-1">
@@ -141,29 +139,29 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center">
-                        <div className="font-semibold text-green-700">KSh {game.entry_fee}</div>
+                        <div className="font-semibold text-green-700">KSh {tournament.entry_fee}</div>
                         <div className="text-xs text-muted-foreground">Entry Fee Paid</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold text-orange-700">KSh {game.max_winnings}</div>
-                        <div className="text-xs text-muted-foreground">Max Winnings</div>
+                        <div className="font-semibold text-orange-700">KSh {tournament.prize_pool}</div>
+                        <div className="text-xs text-muted-foreground">Prize Pool</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold text-blue-700">{game.max_players}</div>
+                        <div className="font-semibold text-blue-700">{tournament.max_participants}</div>
                         <div className="text-xs text-muted-foreground">Max Players</div>
                       </div>
                     </div>
                     
                     {canPlay ? (
                       <Button 
-                        onClick={() => onGameStart(game.id)}
+                        onClick={() => onGameStart(tournament.id)}
                         className="w-full bg-green-600 hover:bg-green-700"
                       >
                         Start Playing!
                       </Button>
                     ) : (
                       <Button disabled className="w-full">
-                        {expired ? 'Game Starting Soon...' : `Starts in ${timeString}`}
+                        {expired ? 'Tournament Starting Soon...' : `Starts in ${timeString}`}
                       </Button>
                     )}
                   </CardContent>
@@ -191,17 +189,17 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
           </Card>
         ) : (
           <div className="grid gap-4">
-            {games.map(game => {
-              const { timeString } = getTimeUntilStart(game.scheduled_start);
-              const registered = isUserRegistered(game.id);
-              const hasEnoughBalance = profile ? profile.balance >= game.entry_fee : false;
-              const isPremiumGame = game.game_categories?.is_premium;
+            {games.map(tournament => {
+              const { timeString } = getTimeUntilStart(tournament.start_time);
+              const registered = isUserRegistered(tournament.id);
+              const hasEnoughBalance = profile ? profile.balance >= tournament.entry_fee : false;
+              const isPremiumGame = tournament.tournament_type === 'premium';
               const canRegister = !registered && hasEnoughBalance && 
-                               new Date() < new Date(game.registration_deadline);
+                               new Date() < new Date(tournament.registration_deadline);
               
               return (
                 <Card 
-                  key={game.id} 
+                  key={tournament.id} 
                   className={`border-0 shadow-lg transition-all ${
                     isPremiumGame 
                       ? 'bg-gradient-to-br from-yellow-50 to-amber-100' 
@@ -213,11 +211,11 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
                       <div>
                         <CardTitle className="text-lg flex items-center gap-2">
                           {isPremiumGame && <Crown className="h-4 w-4 text-yellow-600" />}
-                          {game.title}
+                          {tournament.name}
                           {registered && <CheckCircle className="h-4 w-4 text-green-600" />}
                         </CardTitle>
                         <CardDescription>
-                          {game.game_categories?.description}
+                          {tournament.description || `${tournament.game_type} Tournament`}
                         </CardDescription>
                       </div>
                       <Badge variant="outline" className="flex items-center gap-1">
@@ -230,30 +228,30 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="text-center">
                         <div className={`font-semibold ${hasEnoughBalance ? 'text-green-700' : 'text-red-700'}`}>
-                          KSh {game.entry_fee}
+                          KSh {tournament.entry_fee}
                         </div>
                         <div className="text-xs text-muted-foreground">Entry Fee</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold text-orange-700">KSh {game.max_winnings}</div>
-                        <div className="text-xs text-muted-foreground">Max Winnings</div>
+                        <div className="font-semibold text-orange-700">KSh {tournament.prize_pool}</div>
+                        <div className="text-xs text-muted-foreground">Prize Pool</div>
                       </div>
                       <div className="text-center">
                         <div className="font-semibold text-blue-700 flex items-center justify-center gap-1">
                           <Users className="h-3 w-3" />
-                          {game.max_players}
+                          {tournament.current_participants}/{tournament.max_participants}
                         </div>
-                        <div className="text-xs text-muted-foreground">Max Players</div>
+                        <div className="text-xs text-muted-foreground">Participants</div>
                       </div>
                     </div>
 
-                    {/* Prize Pool Progress */}
+                    {/* Registration Progress */}
                     <div className="mb-4">
                       <div className="flex justify-between text-sm mb-1">
-                        <span>Prize Pool</span>
-                        <span>KSh {game.prize_pool}</span>
+                        <span>Registration</span>
+                        <span>{tournament.current_participants}/{tournament.max_participants}</span>
                       </div>
-                      <Progress value={(game.prize_pool / (game.max_winnings * 2)) * 100} className="h-2" />
+                      <Progress value={(tournament.current_participants / tournament.max_participants) * 100} className="h-2" />
                     </div>
                     
                     {registered ? (
@@ -263,11 +261,11 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
                       </Button>
                     ) : canRegister ? (
                       <Button 
-                        onClick={() => handleGameRegistration(game.id)}
-                        disabled={registering === game.id}
+                        onClick={() => handleGameRegistration(tournament.id)}
+                        disabled={registering === tournament.id}
                         className="w-full"
                       >
-                        {registering === game.id ? 'Registering...' : `Register (KSh ${game.entry_fee})`}
+                        {registering === tournament.id ? 'Registering...' : `Register (KSh ${tournament.entry_fee})`}
                       </Button>
                     ) : (
                       <Button disabled className="w-full">
@@ -278,7 +276,7 @@ const ScheduledGameLobby: React.FC<ScheduledGameLobbyProps> = ({ onGameStart }) 
                     {isPremiumGame && (
                       <p className="text-xs text-yellow-700 mt-2 flex items-center gap-1">
                         <Crown className="h-3 w-3" />
-                        Premium members get bonus points and higher payouts
+                        Premium tournament with enhanced rewards
                       </p>
                     )}
                   </CardContent>

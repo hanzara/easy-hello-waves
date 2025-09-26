@@ -4,49 +4,38 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-interface GameCategory {
+interface Tournament {
   id: string;
   name: string;
-  description: string;
-  entry_fee: number;
-  max_winnings: number;
-  is_premium: boolean;
-  created_at: string;
-}
-
-interface ScheduledGame {
-  id: string;
-  category_id: string;
-  title: string;
   description?: string;
-  scheduled_start: string;
-  scheduled_end: string;
-  registration_deadline: string;
-  max_players: number;
-  min_players: number;
+  game_type: string;
   entry_fee: number;
-  max_winnings: number;
   prize_pool: number;
-  status: 'scheduled' | 'registering' | 'running' | 'completed' | 'cancelled';
+  max_participants: number;
+  current_participants: number;
+  start_time: string;
+  end_time: string;
+  registration_deadline: string;
+  status: 'upcoming' | 'active' | 'completed' | 'cancelled';
+  tournament_type: string;
   created_at: string;
   updated_at: string;
-  game_categories?: GameCategory;
 }
 
-interface GameRegistration {
+interface TournamentParticipant {
   id: string;
-  game_id: string;
+  tournament_id: string;
   user_id: string;
   entry_fee_paid: number;
   registered_at: string;
-  scheduled_games?: ScheduledGame;
+  game_tournaments?: Tournament;
 }
 
 export const useScheduledGames = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [games, setGames] = useState<ScheduledGame[]>([]);
-  const [userRegistrations, setUserRegistrations] = useState<GameRegistration[]>([]);
+  const [games, setGames] = useState<Tournament[]>([]);
+  const [userRegistrations, setUserRegistrations] = useState<TournamentParticipant[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,13 +48,10 @@ export const useScheduledGames = () => {
   const fetchScheduledGames = async () => {
     try {
       const { data, error } = await supabase
-        .from('scheduled_games')
-        .select(`
-          *,
-          game_categories (*)
-        `)
-        .in('status', ['scheduled', 'registering'])
-        .order('scheduled_start', { ascending: true });
+        .from('game_tournaments')
+        .select('*')
+        .in('status', ['upcoming', 'active'])
+        .order('start_time', { ascending: true });
 
       if (error) {
         console.error('Error fetching games:', error);
@@ -89,13 +75,10 @@ export const useScheduledGames = () => {
 
     try {
       const { data, error } = await supabase
-        .from('game_registrations')
+        .from('tournament_participants')
         .select(`
           *,
-          scheduled_games (
-            *,
-            game_categories (*)
-          )
+          game_tournaments (*)
         `)
         .eq('user_id', user.id)
         .order('registered_at', { ascending: false });
@@ -114,58 +97,46 @@ export const useScheduledGames = () => {
     if (!user) return { success: false, message: 'Please login first' };
 
     try {
-      // Get game details
-      const { data: game, error: gameError } = await supabase
-        .from('scheduled_games')
+      // Get tournament details
+      const { data: tournament, error: tournamentError } = await supabase
+        .from('game_tournaments')
         .select('*')
         .eq('id', gameId)
         .single();
 
-      if (gameError || !game) {
-        return { success: false, message: 'Game not found' };
+      if (tournamentError || !tournament) {
+        return { success: false, message: 'Tournament not found' };
       }
 
       // Check if user has enough balance
-      if (userBalance < game.entry_fee) {
+      if (userBalance < tournament.entry_fee) {
         return { success: false, message: 'Insufficient balance' };
-      }
-
-      // Check for scheduling conflicts
-      const { data: conflictData, error: conflictError } = await supabase
-        .rpc('check_game_scheduling_conflict', {
-          p_user_id: user.id,
-          p_game_start: game.scheduled_start,
-          p_game_end: game.scheduled_end
-        });
-
-      if (conflictError) {
-        console.error('Conflict check error:', conflictError);
-        return { success: false, message: 'Error checking schedule conflicts' };
-      }
-
-      if (conflictData) {
-        return { success: false, message: 'You have a scheduling conflict with another registered game' };
       }
 
       // Check if registration deadline has passed
       const now = new Date();
-      const deadline = new Date(game.registration_deadline);
+      const deadline = new Date(tournament.registration_deadline);
       if (now > deadline) {
         return { success: false, message: 'Registration deadline has passed' };
       }
 
-      // Register for the game
+      // Check if tournament is full
+      if (tournament.current_participants >= tournament.max_participants) {
+        return { success: false, message: 'Tournament is full' };
+      }
+
+      // Register for the tournament
       const { error: registrationError } = await supabase
-        .from('game_registrations')
+        .from('tournament_participants')
         .insert({
-          game_id: gameId,
+          tournament_id: gameId,
           user_id: user.id,
-          entry_fee_paid: game.entry_fee
+          entry_fee_paid: tournament.entry_fee
         });
 
       if (registrationError) {
         console.error('Registration error:', registrationError);
-        return { success: false, message: 'Failed to register for game' };
+        return { success: false, message: 'Failed to register for tournament' };
       }
 
       // Refresh registrations
@@ -173,10 +144,10 @@ export const useScheduledGames = () => {
 
       toast({
         title: "Registration Successful!",
-        description: `You're registered for ${game.title}. Entry fee: KSh ${game.entry_fee}`,
+        description: `You're registered for ${tournament.name}. Entry fee: KSh ${tournament.entry_fee}`,
       });
 
-      return { success: true, message: 'Successfully registered for game!' };
+      return { success: true, message: 'Successfully registered for tournament!' };
     } catch (error) {
       console.error('Registration error:', error);
       return { success: false, message: 'An error occurred during registration' };
@@ -184,16 +155,16 @@ export const useScheduledGames = () => {
   };
 
   const isUserRegistered = (gameId: string) => {
-    return userRegistrations.some(reg => reg.game_id === gameId);
+    return userRegistrations.some(reg => reg.tournament_id === gameId);
   };
 
-  const getTimeUntilStart = (scheduledStart: string) => {
+  const getTimeUntilStart = (startTime: string) => {
     const now = new Date();
-    const start = new Date(scheduledStart);
+    const start = new Date(startTime);
     const diff = start.getTime() - now.getTime();
 
     if (diff <= 0) {
-      return { expired: true, timeString: 'Game Starting!' };
+      return { expired: true, timeString: 'Tournament Starting!' };
     }
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
