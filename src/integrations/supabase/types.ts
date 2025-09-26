@@ -1479,6 +1479,66 @@ export type Database = {
         }
         Relationships: []
       }
+      game_tournaments: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          current_participants: number | null
+          description: string | null
+          end_time: string
+          entry_fee: number
+          game_type: string
+          id: string
+          max_participants: number | null
+          name: string
+          prize_pool: number | null
+          registration_deadline: string
+          rules: Json | null
+          start_time: string
+          status: string | null
+          tournament_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          current_participants?: number | null
+          description?: string | null
+          end_time: string
+          entry_fee?: number
+          game_type: string
+          id?: string
+          max_participants?: number | null
+          name: string
+          prize_pool?: number | null
+          registration_deadline: string
+          rules?: Json | null
+          start_time: string
+          status?: string | null
+          tournament_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          current_participants?: number | null
+          description?: string | null
+          end_time?: string
+          entry_fee?: number
+          game_type?: string
+          id?: string
+          max_participants?: number | null
+          name?: string
+          prize_pool?: number | null
+          registration_deadline?: string
+          rules?: Json | null
+          start_time?: string
+          status?: string | null
+          tournament_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       investment_advisory: {
         Row: {
           advisor_fee: number | null
@@ -1620,6 +1680,51 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_challenges: {
+        Row: {
+          category: string
+          completion_count: number | null
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          id: string
+          is_active: boolean | null
+          questions: Json
+          reward_amount: number | null
+          reward_points: number | null
+          time_limit: number | null
+          title: string
+        }
+        Insert: {
+          category: string
+          completion_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          is_active?: boolean | null
+          questions: Json
+          reward_amount?: number | null
+          reward_points?: number | null
+          time_limit?: number | null
+          title: string
+        }
+        Update: {
+          category?: string
+          completion_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          is_active?: boolean | null
+          questions?: Json
+          reward_amount?: number | null
+          reward_points?: number | null
+          time_limit?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       learning_content: {
         Row: {
           category: string
@@ -1714,6 +1819,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      live_competition_players: {
+        Row: {
+          competition_id: string | null
+          current_score: number | null
+          final_position: number | null
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          user_id: string
+        }
+        Insert: {
+          competition_id?: string | null
+          current_score?: number | null
+          final_position?: number | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          user_id: string
+        }
+        Update: {
+          competition_id?: string | null
+          current_score?: number | null
+          final_position?: number | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_competition_players_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "live_competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_competitions: {
+        Row: {
+          competition_type: string
+          created_at: string | null
+          current_players: number | null
+          description: string | null
+          end_time: string | null
+          entry_fee: number | null
+          game_state: Json | null
+          id: string
+          max_players: number | null
+          name: string
+          start_time: string | null
+          status: string | null
+        }
+        Insert: {
+          competition_type: string
+          created_at?: string | null
+          current_players?: number | null
+          description?: string | null
+          end_time?: string | null
+          entry_fee?: number | null
+          game_state?: Json | null
+          id?: string
+          max_players?: number | null
+          name: string
+          start_time?: string | null
+          status?: string | null
+        }
+        Update: {
+          competition_type?: string
+          created_at?: string | null
+          current_players?: number | null
+          description?: string | null
+          end_time?: string | null
+          entry_fee?: number | null
+          game_state?: Json | null
+          id?: string
+          max_players?: number | null
+          name?: string
+          start_time?: string | null
+          status?: string | null
+        }
+        Relationships: []
       }
       loan_agreements: {
         Row: {
@@ -3187,6 +3375,110 @@ export type Database = {
           },
         ]
       }
+      prediction_bets: {
+        Row: {
+          actual_payout: number | null
+          bet_amount: number
+          id: string
+          placed_at: string | null
+          potential_payout: number | null
+          predicted_option: Json
+          prediction_id: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          actual_payout?: number | null
+          bet_amount: number
+          id?: string
+          placed_at?: string | null
+          potential_payout?: number | null
+          predicted_option: Json
+          prediction_id?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          actual_payout?: number | null
+          bet_amount?: number
+          id?: string
+          placed_at?: string | null
+          potential_payout?: number | null
+          predicted_option?: Json
+          prediction_id?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_bets_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prediction_games: {
+        Row: {
+          category: string
+          correct_answer: Json | null
+          created_at: string | null
+          deadline: string
+          description: string | null
+          house_edge: number | null
+          id: string
+          maximum_bet: number | null
+          minimum_bet: number | null
+          options: Json
+          prediction_type: string
+          resolution_time: string | null
+          resolved_at: string | null
+          source_url: string | null
+          status: string | null
+          title: string
+          total_pool: number | null
+        }
+        Insert: {
+          category: string
+          correct_answer?: Json | null
+          created_at?: string | null
+          deadline: string
+          description?: string | null
+          house_edge?: number | null
+          id?: string
+          maximum_bet?: number | null
+          minimum_bet?: number | null
+          options: Json
+          prediction_type: string
+          resolution_time?: string | null
+          resolved_at?: string | null
+          source_url?: string | null
+          status?: string | null
+          title: string
+          total_pool?: number | null
+        }
+        Update: {
+          category?: string
+          correct_answer?: Json | null
+          created_at?: string | null
+          deadline?: string
+          description?: string | null
+          house_edge?: number | null
+          id?: string
+          maximum_bet?: number | null
+          minimum_bet?: number | null
+          options?: Json
+          prediction_type?: string
+          resolution_time?: string | null
+          resolved_at?: string | null
+          source_url?: string | null
+          status?: string | null
+          title?: string
+          total_pool?: number | null
+        }
+        Relationships: []
+      }
       premium_subscriptions: {
         Row: {
           auto_renew: boolean | null
@@ -3663,6 +3955,53 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_participants: {
+        Row: {
+          current_score: number | null
+          eliminated_at: string | null
+          entry_fee_paid: number | null
+          id: string
+          prize_amount: number | null
+          ranking: number | null
+          registration_time: string | null
+          status: string | null
+          tournament_id: string | null
+          user_id: string
+        }
+        Insert: {
+          current_score?: number | null
+          eliminated_at?: string | null
+          entry_fee_paid?: number | null
+          id?: string
+          prize_amount?: number | null
+          ranking?: number | null
+          registration_time?: string | null
+          status?: string | null
+          tournament_id?: string | null
+          user_id: string
+        }
+        Update: {
+          current_score?: number | null
+          eliminated_at?: string | null
+          entry_fee_paid?: number | null
+          id?: string
+          prize_amount?: number | null
+          ranking?: number | null
+          registration_time?: string | null
+          status?: string | null
+          tournament_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_participants_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "game_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_fees: {
         Row: {
           amount: number
@@ -3783,6 +4122,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_challenge_completions: {
+        Row: {
+          answers: Json | null
+          challenge_id: string | null
+          completed_at: string | null
+          id: string
+          points_earned: number | null
+          reward_earned: number | null
+          score: number
+          time_taken: number | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          challenge_id?: string | null
+          completed_at?: string | null
+          id?: string
+          points_earned?: number | null
+          reward_earned?: number | null
+          score: number
+          time_taken?: number | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          challenge_id?: string | null
+          completed_at?: string | null
+          id?: string
+          points_earned?: number | null
+          reward_earned?: number | null
+          score?: number
+          time_taken?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenge_completions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "learning_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_financial_profiles: {
         Row: {
