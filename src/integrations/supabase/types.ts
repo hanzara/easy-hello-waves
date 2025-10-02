@@ -6930,6 +6930,10 @@ export type Database = {
         Args: { p_code: string; p_username: string }
         Returns: Json
       }
+      authenticate_seller_with_password: {
+        Args: { p_password: string; p_username: string }
+        Returns: Json
+      }
       auto_approve_loan: {
         Args: { application_id: string }
         Returns: boolean
